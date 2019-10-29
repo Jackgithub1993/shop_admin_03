@@ -24,7 +24,7 @@
         >
           <el-submenu index="1">
             <!-- 标题 -->
-            <template slot="title">
+            <template v-slot:title>
               <i class="el-icon-location"></i>
               <span>用户管理</span>
             </template>
@@ -32,24 +32,24 @@
             <!-- 解析时，会将配置的路径，当成绝对路径使用，写的是user -->
             <el-menu-item index="users">
               <i class="el-icon-menu"></i>
-              <span>用户列表</span>
+              <span slot="title">用户列表</span>
             </el-menu-item>
           </el-submenu>
 
           <el-submenu index="2">
-            <template slot="title">
+            <template v-slot:title>
               <i class="el-icon-location"></i>
               <span>权限管理</span>
             </template>
             <!-- 展开的内容 -->
             <el-menu-item index="roles">
               <i class="el-icon-menu"></i>
-              <span>角色列表</span>
+              <span slot="title">角色列表</span>
             </el-menu-item>
 
             <el-menu-item index="rights">
               <i class="el-icon-menu"></i>
-              <span>权限列表</span>
+              <span slot="title">权限列表</span>
             </el-menu-item>
           </el-submenu>
         </el-menu>
