@@ -77,9 +77,11 @@ export default {
           url: 'http://localhost:8888/api/private/v1/login',
           data: this.form
         }).then(res => {
-          const { meta } = res.data
+          const { meta, data } = res.data
           if (meta.status === 200) {
             console.log(meta.msg)
+            // 一登陆成功  就会存储到token(字符串)到本地
+            localStorage.setItem('token', data.token)
             this.$message({
               // this.$message()
               type: 'success',
