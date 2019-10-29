@@ -6,6 +6,11 @@ import Users from '../components/users.vue'
 import Roles from '../components/roles.vue'
 import Rights from '../components/rights.vue'
 Vue.use(VueRouter)
+
+const originalPush = VueRouter.prototype.push
+VueRouter.prototype.push = function push (location) {
+  return originalPush.call(this, location).catch(err => err)
+}
 // 创建路由实例
 const routes = [
   { path: '/', redirect: '/index' },
