@@ -17,8 +17,6 @@
 </template>
 
 <script>
-// 引入ajax请求
-import axios from 'axios'
 export default {
   // 引入数据
   data () {
@@ -63,37 +61,64 @@ export default {
     reset () {
       this.$refs.form.resetFields()
     },
-    login () {
+    async login () {
+      // 改造后 有成功和失败 使用try catch方法直接抛出错误
+      try {
+        await this.$refs.form.validate()
+        // 只要到这里就是登陆成功，发送ajax请求
+        const { meta, data } = await this.$axios({
+          method: 'post',
+          url: 'login',
+          data: this.form
+        })
+        // const { meta, data } = res
+        if (meta.status === 200) {
+          console.log(meta.msg)
+          // 一登陆成功  就会存储到token(字符串)到本地
+          localStorage.setItem('token', data.token)
+          this.$message({
+            // this.$message()
+            type: 'success',
+            message: meta.msg,
+            duration: 1000
+          })
+          this.$router.push('/index')
+        } else {
+          this.$message.error(meta.msg)
+        }
+      } catch (e) {
+        console.log(e)
+      }
       // 先校验 在发送ajac请求
       // 拿到form表单 组件 调用组件的校验方法
       // 参数1 是否校验成功boolean值
       // 参数2 是一个对象 包含了错误的校验字段
-      this.$refs.form.validate(isValid => {
-        // 如果校验失败 就直接return
-        // if (!isValid)  return
-        // 发送ajax请求
-        axios({
-          method: 'post',
-          url: 'http://localhost:8888/api/private/v1/login',
-          data: this.form
-        }).then(res => {
-          const { meta, data } = res.data
-          if (meta.status === 200) {
-            console.log(meta.msg)
-            // 一登陆成功  就会存储到token(字符串)到本地
-            localStorage.setItem('token', data.token)
-            this.$message({
-              // this.$message()
-              type: 'success',
-              message: meta.msg,
-              duration: 1000
-            })
-            this.$router.push('/index')
-          } else {
-            this.$message.error(meta.msg)
-          }
-        })
-      })
+      // this.$refs.form.validate(isValid => {
+      //   // 如果校验失败 就直接return
+      //   // if (!isValid)  return
+      //   // 发送ajax请求
+      //   this.$axios({
+      //     method: 'post',
+      //     url: 'login',
+      //     data: this.form
+      //   }).then(res => {
+      //     const { meta, data } = res
+      //     if (meta.status === 200) {
+      //       console.log(meta.msg)
+      //       // 一登陆成功  就会存储到token(字符串)到本地
+      //       localStorage.setItem('token', data.token)
+      //       this.$message({
+      //         // this.$message()
+      //         type: 'success',
+      //         message: meta.msg,
+      //         duration: 1000
+      //       })
+      //       this.$router.push('/index')
+      //     } else {
+      //       this.$message.error(meta.msg)
+      //     }
+      //   })
+      // })
     }
   }
 }
