@@ -10,7 +10,7 @@
     <el-input placeholder="请输入内容" v-model="query" class="input-with-select">
       <el-button @click= "searchUser" slot="append" icon="el-icon-search"></el-button>
     </el-input>
-    <el-button class="addBtn" plain type="success">添加用户</el-button>
+    <el-button @click="showAddusers" class="addBtn" plain type="success">添加用户</el-button>
 
   <!-- 表格 -->
     <el-table :data="userList">
@@ -28,7 +28,7 @@
       获取当前id 要使用到作用域插槽-->
       <el-table-column label="操作">
         <template v-slot:default="obj">
-          <el-button plain size="small" icon="el-icon-edit" type="primary"></el-button>
+          <el-button @click="showEditusers(obj.row)" plain size="small" icon="el-icon-edit" type="primary"></el-button>
           <el-button
             @click="delUsers(obj.row.id)"
             plain
@@ -49,6 +49,62 @@
       layout="total, sizes, prev, pager, next, jumper"
       :total="total"
     ></el-pagination>
+    <!-- 添加用户 -->
+  <el-dialog @close="closeDialog"
+  title="添加用户"
+  :visible.sync="dialogVisible"
+  width="30%"
+ >
+ <!-- ref是用获取表单组件 实现双向数据绑定跟form -->
+  <el-form :rules="rules" ref="form" :model="form" label-width="80px">
+    <!-- item是每一行 每一个表单项  -->
+    <el-form-item label="用户名" prop="username">
+      <el-input placeholder="请输入用户名" v-model="form.username"></el-input>
+    </el-form-item>
+    <el-form-item  label="密码" prop="password">
+      <el-input  type="password" placeholder="请输入密码" v-model="form.password"></el-input>
+    </el-form-item>
+    <el-form-item label="邮箱" prop="email">
+      <el-input placeholder="请输入邮箱" v-model="form.email"></el-input>
+    </el-form-item>
+    <el-form-item label="手机" prop="mobile">
+      <el-input placeholder="请输入手机" v-model="form.mobile"></el-input>
+    </el-form-item>
+   </el-form>
+<template v-slot:footer>
+<span class="dialog-footer">
+    <el-button @click="dialogVisible = false">取 消</el-button>
+    <el-button @click="addUsers" type="primary" >确 定</el-button>
+  </span>
+</template>
+</el-dialog>
+
+<!-- 修改用户信息 -->
+ <el-dialog @close="closeEditDialog"
+  title="修改用户"
+  :visible.sync="editVisible"
+  width="30%"
+ >
+ <!-- ref是用获取表单组件 实现双向数据绑定跟form -->
+  <el-form :rules="rules" ref="editForm" :model="editForm" label-width="80px">
+    <!-- item是每一行 每一个表单项  -->
+    <el-form-item label="用户名" prop="username">
+    <el-tag type="info">{{editForm.username}}</el-tag>
+    </el-form-item>
+    <el-form-item label="邮箱" prop="email">
+      <el-input placeholder="请输入邮箱" v-model="editForm.email"></el-input>
+    </el-form-item>
+    <el-form-item label="手机" prop="mobile">
+      <el-input placeholder="请输入手机" v-model="editForm.mobile"></el-input>
+    </el-form-item>
+   </el-form>
+<template v-slot:footer>
+<span class="dialog-footer">
+    <el-button @click="editVisible = false">取 消</el-button>
+    <el-button @click="editUsers" type="primary" >确 定</el-button>
+  </span>
+</template>
+</el-dialog>
   </div>
 </template>
 <script>
@@ -65,7 +121,38 @@ export default {
       query: '',
       pagenum: 1,
       pagesize: 2,
-      total: 0
+      total: 0,
+      dialogVisible: false,
+      editVisible: false,
+      form: {
+        username: '',
+        password: '',
+        email: '',
+        mobile: ''
+      },
+      editForm: {
+        id: '',
+        username: '', // 用户名用于展示的
+        email: '',
+        mobile: ''
+      },
+      rules: {
+        username: [
+          { required: true, message: '请输入用户名', trigger: ['blur', 'change'] },
+          { min: 3, max: 12, message: '长度在 3 到 12 个字符', trigger: ['blur', 'change'] }
+        ],
+        // eslint-disable-next-line no-dupe-keys
+        password: [
+          { required: true, message: '请输入密码', trigger: ['blur', 'change'] },
+          { min: 3, max: 12, message: '长度在 3 到 12 个字符', trigger: ['blur', 'change'] }
+        ],
+        email: [
+          { type: 'email', message: '请输入正确的邮箱', trigger: ['blur', 'change'] }
+        ],
+        mobile: [
+          { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: ['blur', 'change'] }
+        ]
+      }
     }
   },
   methods: {
@@ -210,6 +297,75 @@ export default {
       //     this.$message.error(meta.msg)
       //   }
       // })
+    },
+    showAddusers () {
+      this.dialogVisible = true
+    },
+    async addUsers () {
+      try {
+      // 先校验
+        await this.$refs.form.validate()
+        // 发送ajax请求,进行结构
+        const { meta } = await this.$axios.post('users', this.form)
+        // console.log(res)
+        // 进行判断
+        if (meta.status === 201) {
+          this.$message.success(meta.msg)
+          // 关闭对话框
+          this.dialogVisible = false
+          // 更新到当前页等于总页数除以几页，向上取整
+          // 需要先让total+1在计算总页数
+          // this.total++
+          this.pagenum = Math.ceil(++this.total / this.pagesize)
+          // 重新渲染
+          this.getUseList()
+        } else {
+          this.$message.error(meta.msg)
+        }
+      } catch (e) {
+        console.log(e)
+      }
+    },
+    // 重置表格
+    closeDialog () {
+      this.$refs.form.resetFields()
+    },
+    // 注册修改事件 点击修改按钮 显示出对话框，进行数据回显
+    // 填充之前的数据 ，就是之前的数据展示出来 我进行修改
+    showEditusers (row) {
+      // eslint-disable-next-line no-unused-expressions
+      this.editVisible = true
+      this.editForm.username = row.username
+      this.editForm.email = row.email
+      this.editForm.id = row.id
+      this.editForm.mobile = row.mobile
+    },
+    // 点击确定按钮，发送ajax，重新渲染页面
+    async editUsers () {
+      try {
+        //  先校验
+        await this.$refs.editForm.validate()
+        // const { meta } = await this.$axios.put(`users/${this.editForm.id}`, {
+        //   email: this.editForm.email,
+        //   mobile: this.editForm.mobile
+        // })
+        const { id, email, mobile } = this.editForm
+        // 发送ajax请求
+        const { meta } = await this.$axios.put(`users/${id}`, { email, mobile })
+        if (meta.status === 200) {
+          this.$message.success(meta.msg)
+          this.editVisible = false
+          this.getUseList()
+        } else {
+          this.$message.error(meta.msg)
+        }
+      } catch (e) {
+        console.log(e)
+      }
+    },
+    // 重置表格
+    closeEditDialog () {
+      this.$refs.editForm.resetFields()
     }
   }
 }
